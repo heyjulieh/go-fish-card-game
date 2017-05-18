@@ -1,57 +1,194 @@
+module Drawable
+  attr_reader :cards
+
+  def initialize(*args)
+    @cards = []
+    post_initialize(*args)
+  end
+
+  # overridden by class
+  def post_initialize(*args)
+    nil
+  end
+
+  def draw(n=1)
+    @cards.pop(n).reverse
+  end
+
+  def draw_one
+    draw.first
+  end
+
+  def push(*cards)
+    @cards.push(*cards)
+  end
+end
+
 class PlayingCard
-  # initialize
+  attr_accessor :rank, :suit, :face
+  def initialize (args)
+    @rank = args[:rank]
+    @suit = args[:suit]
+    @face = @rank + @suit
+  end
+
+  def to_s
+    @face
+  end
 end
 
 class CardDeck
-  # initialize
+  include Drawable
+
+  def post_initialize(shuffled=true)
+    generate_cards
+    shuffle if shuffled
+  end
+
+  def to_s
+    @cards.map {|card| card.face }
+  end
+
+  def shuffle
+    @cards.shuffle!
+  end
+
+  private
+
+  def generate_cards(decks=1)
+    ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+    suits = ["C", "D", "H", "S"]
+
+    @cards.clear
+
+    decks.times do |i|
+      ranks.each do |rank|
+        suits.each do |suit|
+            self.push( PlayingCard.new(rank: rank, suit: suit) )
+        end
+      end
+    end
+  end
+
 end
+
 
 class HandOfCards
-  # initialize
+  include Drawable
+
+  def post_initialize(starting_cards=[])
+    @cards += starting_cards
+  end
+
+  def to_s
+    @cards.join(" ")
+  end
+
+  def any?(rank: "", suit: "")
+    face = (rank + suit).upcase
+    return false if face.empty?
+    @cards.any? {|c| c.face.match(face) }
+  end
+
+  def take!(rank: "", suit: "")
+    taken = []
+    face = (rank + suit).upcase
+    return taken if face.empty?
+
+    @cards.delete_if do |c|
+      taken.push(c) if c.face.match(face)
+    end
+
+    taken
+  end
 end
 
+
 class CardPlayer
-  # initialize
+
+  attr_reader :hand
+
+  def initialize(args)
+    @hand = args[:hand]
+  end
+
 end
+
 
 
 # Driver Code
+# GAME SETUP
+
+puts 'creating a deck'
+deck = CardDeck.new
+deck.shuffle
+
+puts 'drawing some cards'
+card = deck.draw_one
+two_cards = deck.draw(2)
+
+puts 'creating hand 1 and player 1'
+cards1 = deck.draw(5)
+h1 = HandOfCards.new(cards1)
+p1 = CardPlayer.new(hand: h1)
+
+puts 'creating hand 2 and player 2'
+cards2 = deck.draw(5)
+h2 = HandOfCards.new(cards2)
+p2 = CardPlayer.new(hand: h2 )
+
+
+# GAME PLAY
+
+puts 'starting round'
+wanted_rank = "3"
+puts "p1, do you have any... #{wanted_rank}'s?"
+puts 'checking player 1 hand'
+if p1.hand.any?(rank: wanted_rank)
+    puts 'found card!'
+    cards = p1.hand.take!(rank: wanted_rank)
+    p2.hand.push(*cards)
+else
+    puts "Go Fish"
+    drawn_card = deck.draw
+    p2.hand.push(drawn_card)
+end
 if __FILE__ == $0
   puts "This will only print if you run `ruby go_fish.rb`"
-  # deck = CardDeck.new
+  deck = CardDeck.new
   # # # puts "cards: #{deck.cards}"
   # # # puts "cards: #{deck}"
   # # # puts "shuffled: #{deck.shuffle}"
   # # puts "one drawn card: #{deck.draw_one}"
   # # puts "two drawn cards: #{deck.draw(2)}"
 
-  # cards1 = deck.draw(5)
-  # cards2 = deck.draw(5)
+  cards1 = deck.draw(5)
+  cards2 = deck.draw(5)
   # # # puts "cards1: #{cards1.join(" ")}"
   # # # puts "cards2: #{cards2.join(" ")}"
 
-  # h1 = HandOfCards.new(cards1)
-  # h2 = HandOfCards.new(cards2)
+  h1 = HandOfCards.new(cards1)
+  h2 = HandOfCards.new(cards2)
 
-  # puts "hand1: #{h1}"
-  # puts "hand2: #{h2}"
+  puts "hand1: #{h1}"
+  puts "hand2: #{h2}"
 
-  # p1 = CardPlayer.new(hand: h1)
-  # p2 = CardPlayer.new(hand: HandOfCards.new(deck.draw(5)) )
+  p1 = CardPlayer.new(hand: h1)
+  p2 = CardPlayer.new(hand: HandOfCards.new(deck.draw(5)) )
 
-  # puts "Hands: [ #{p1.hand} ], [ #{p2.hand} ] (before)"
+  puts "Hands: [ #{p1.hand} ], [ #{p2.hand} ] (before)"
 
-  # ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-  # ranks.each do |rank|
-  #   print "p1, do you have any... #{rank}'s?"
-  #   if p1.hand.any?(rank: rank)
-  #     cards = p1.hand.take!(rank: rank)
-  #     print " -- YES: [ #{ cards.join(" ") } ]\n"
-  #     p2.hand.push(*cards)
-  #     break
-  #   end
-  #   print " -- NO!\n"
-  # end
+  ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+  ranks.each do |rank|
+    print "p1, do you have any... #{rank}'s?"
+    if p1.hand.any?(rank: rank)
+      cards = p1.hand.take!(rank: rank)
+      print " -- YES: [ #{ cards.join(" ") } ]\n"
+      p2.hand.push(*cards)
+      break
+    end
+    print " -- NO!\n"
+  end
 
-  # puts "Hands: [ #{p1.hand} ], [ #{p2.hand} ] (after)"
+  puts "Hands: [ #{p1.hand} ], [ #{p2.hand} ] (after)"
 end

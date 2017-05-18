@@ -19,10 +19,10 @@ RSpec.describe PlayingCard, :type => :model do
   context "[instantiation]" do
     describe "#initialize" do
       it "accepts a single argument (MAKE THIS ARGUMENT A HASH!)" do
-        expect{ PlayingCard.new }.to raise_error(ArgumentError)
-        expect{ PlayingCard.new(Hash.new) }.not_to raise_error
-        expect { @card }.not_to raise_error
-      end
+       expect{ PlayingCard.new }.to raise_error(ArgumentError)
+       expect{ PlayingCard.new({rank:'2',suit:'H'}) }.not_to raise_error
+       expect { @card }.not_to raise_error
+     end
       it "accesses the hash for keys :rank and :suit (and assigns them to an instance variable!)" do
         hash = instance_double("hash")
         expect(hash).to receive(:[]).with(:rank) { random_rank }
